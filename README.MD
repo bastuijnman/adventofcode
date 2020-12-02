@@ -9,3 +9,8 @@ All answer programs are compiled using
 ```
 rustc answer.rs --out-dir target -O
 ```
+or 
+```
+cargo build/run
+```
+when using external packages.
