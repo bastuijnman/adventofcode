@@ -1,0 +1,9 @@
+name: AOC Day 4
+args:
+    - INPUT:
+        help: The file to use as input
+        required: true
+        index: 1
+    - validators:
+        long: validators
+        takes_value: false
