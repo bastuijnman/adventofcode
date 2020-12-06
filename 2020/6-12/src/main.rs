@@ -46,26 +46,21 @@ fn main() -> io::Result<()> {
     // push last entry as rust ignores last newline
     entries.push(entry);
 
-    let count: usize = entries.iter().map(|entry| {
-        let mut chars: Vec<char> = entry.chars.chars().collect();
-        chars.sort();
-        chars.dedup();
-        chars.len()
-    }).sum();
-
-    // Part 1
+    let count: usize = entries.iter().map(|entry| get_unique_per_group(entry, false)).sum();
     println!("Part 1: {}", count);
 
-    let count: usize = entries.iter().map(|entry| {
-        let chars: Vec<char> = entry.chars.chars().collect();
-        let mut valid: Vec<&char> = chars.iter().filter(|c| chars.iter().filter(|cc| cc == c).count() == entry.number).collect();
-
-        valid.sort();
-        valid.dedup();
-        valid.len()
-    }).sum();
-
-    println!("Part 2: {}", count);
+    let count_second: usize = entries.iter().map(|entry| get_unique_per_group(entry, true)).sum();
+    println!("Part 2: {}", count_second);
 
     Ok(())
+}
+
+fn get_unique_per_group(group: &Group, require_same_answer: bool) -> usize {
+    let mut chars: Vec<char> = group.chars.chars().collect();
+    if require_same_answer {
+        chars = chars.iter().filter(|c| chars.iter().filter(|cc| cc == c).count() == group.number).map(|c| *c).collect();
+    }
+    chars.sort();
+    chars.dedup();
+    chars.len()
 }
