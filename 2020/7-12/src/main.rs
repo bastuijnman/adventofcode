@@ -49,7 +49,7 @@ fn main() -> io::Result<()> {
 }
 
 /*
- * Gets list of uniuque bags that can eventually contain at least one
+ * Gets list of unique bags that can eventually contain at least one
  * bag that you search for.
  */
 fn get_unique_bags_inside_out(map: HashMap<&str, HashMap<&str, i32>>, search: &str) -> Vec<String> {
