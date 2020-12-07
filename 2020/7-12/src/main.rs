@@ -23,23 +23,35 @@ fn main() -> io::Result<()> {
     let regex = Regex::new(r"(?P<key>\D+) bags contain (?P<rest>.+)").unwrap();
     let contains_regex = Regex::new(r"(?P<count>\d+) (?P<key>\w+ \w+) bag(?s)").unwrap();
 
-    // let map: HashMap<&str, HashMap<&str, i32>>
+    /*
+     * Construct hash map with bag type as key & another map as value:
+     * 
+     * "bag type": {
+     *     "bag type": 3,
+     *     "bag type": 8
+     * }
+     */
     let map: HashMap<&str, HashMap<&str, i32>> = list.iter().map(|item| {
         let matches = regex.captures(item).unwrap();
         let base = matches.name("key").unwrap().as_str();
         let rest = matches.name("rest").unwrap().as_str();
         (base, contains_regex.captures_iter(rest).map(|matches| {
+
+            // Capture bag name & the number of bags into tuple
             (matches.name("key").unwrap().as_str(), matches.name("count").unwrap().as_str().parse::<i32>().unwrap())
         }).collect())
     }).collect();
     
-    let count = get_unique_bags_inside_out(map.clone(), "shiny gold");
-    println!("Part 1: {}", count.len());
+    println!("Part 1: {}", get_unique_bags_inside_out(map.clone(), "shiny gold").len());
     println!("Part 2: {}", get_count_outside_in(map.clone(), "shiny gold"));
 
     Ok(())
 }
 
+/*
+ * Gets list of uniuque bags that can eventually contain at least one
+ * bag that you search for.
+ */
 fn get_unique_bags_inside_out(map: HashMap<&str, HashMap<&str, i32>>, search: &str) -> Vec<String> {
     let mut count: Vec<String> = Vec::new();
     for (key, value) in map.iter() {
@@ -52,6 +64,9 @@ fn get_unique_bags_inside_out(map: HashMap<&str, HashMap<&str, i32>>, search: &s
     count
 }
 
+/*
+ * Gets the number of bags that will end up in the one you search for.
+ */
 fn get_count_outside_in(map: HashMap<&str, HashMap<&str, i32>>, search: &str) -> i32 {
     let mut count = 0;
     for (key, value) in map.get(search).unwrap().iter() {
