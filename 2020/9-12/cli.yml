@@ -1,0 +1,10 @@
+name: AOC Day 9
+args:
+    - INPUT:
+        help: The file to use as input
+        required: true
+        index: 1
+    - preamble:
+        short: p
+        long: preamble
+        takes_value: true

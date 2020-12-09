@@ -1,4 +1,4 @@
-name: AOC Day 3
+name: AOC Day 5
 args:
     - INPUT:
         help: The file to use as input
