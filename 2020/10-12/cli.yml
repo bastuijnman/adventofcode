@@ -1,0 +1,6 @@
+name: AOC Day 10
+args:
+    - INPUT:
+        help: The file to use as input
+        required: true
+        index: 1
