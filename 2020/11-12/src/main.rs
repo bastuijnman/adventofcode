@@ -21,35 +21,43 @@ fn main() -> io::Result<()> {
     let empties_at = if mode == "visible" { 5 } else { 4 };
 
     let list: Vec<String> = reader.lines().map(|line| line.unwrap()).collect();
+
+    // Construct list into grid
     let mut map: Vec<Vec<char>> = list.iter().map(|row| row.chars().collect()).collect();
 
     loop {
 
-        let mut new_map: Vec<Vec<char>> = map.clone();
+        let mut processed_map: Vec<Vec<char>> = map.clone();
         for row in 0..map.len() {
             for col in 0..map[row].len() {
 
+                // Get current seat
                 let seat = map[row][col];
+
+                // Get the "adjecent" seats to the current one (can be only visible seats or direct surrounding).
                 let adjacent = if mode == "visible" { get_visible_seats(&map, row, col) } else { get_surrounding_seats(&map, row, col) };
 
+                // Flip logic
                 if seat == 'L' && adjacent.matches('#').count() == 0 {
-                    new_map[row][col] = '#';
+                    processed_map[row][col] = '#';
                 } else if seat == '#' && adjacent.matches('#').count() >= empties_at {
-                    new_map[row][col] = 'L';
+                    processed_map[row][col] = 'L';
                 } else {
-                    new_map[row][col] = seat;
+                    processed_map[row][col] = seat;
                 }
             }
         }
 
-
-        if new_map == map {
-            map = new_map;
+        // If our processed map is the same as the one it's based on we can exit
+        if processed_map == map {
             break;
         }
-        map = new_map;
+
+        // End of the loop, assign processed map for future validation
+        map = processed_map;
     }
 
+    // Only count occupied seats
     println!("Occupied count: {:?}", map.iter().flatten().filter(|c| **c == '#').count());
     
     Ok(())
@@ -82,18 +90,27 @@ fn get_visible_seats(map:&Vec<Vec<char>>, row: usize, col: usize) -> String {
         let mut current_y = (row as i32) + y;
         let mut current_x = (col as i32) + x;
 
+        // We don't care about any out of bounds directions
         if current_x < 0 || current_y < 0 || current_x > x_max || current_y > y_max {
             continue;
         }
 
+        // Get first value for directional tuple
         let mut c = map[current_y as usize][current_x as usize];
+
+        // We're looking for an actual seat
         while c != 'L' && c != '#' {
+
+            // Increment to direction
             current_y = current_y + y;
             current_x = current_x + x;
 
+            // If we overstep our bounds we stop looking
             if current_x < 0 || current_y < 0 || current_x > x_max || current_y > y_max {
                 break;
             }
+
+            // Assign processed cell
             c = map[current_y as usize][current_x as usize];
         }
 
