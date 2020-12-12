@@ -19,6 +19,10 @@ struct Ship {
 }
 
 impl Ship {
+
+    /**
+     * Generate a new ship with the standard AOC parameters
+     */
     fn new() -> Ship {
         Ship {
             direction: "E".to_string(),
@@ -27,6 +31,9 @@ impl Ship {
         }
     }
 
+    /**
+     * Process an instruction directly
+     */
     fn process(&mut self, command: &str, value: i32) {
         match command {
             "F" | "N" | "E" | "S" | "W" => {
@@ -42,6 +49,9 @@ impl Ship {
         }
     }
 
+    /**
+     * Process an instruction using waypoint mechanism
+     */
     fn process_for_waypoint(&mut self, command: &str, value: i32) {
         match command {
             "F" => {
@@ -67,6 +77,9 @@ impl Ship {
         }
     }
 
+    /**
+     * Get manhattan distance from starting position (always 0,0)
+     */
     fn get_manhattan_distance(self) -> i32 {
         i32::abs(self.position_tracker.get("E").unwrap_or(&0) - self.position_tracker.get("W").unwrap_or(&0)) + i32::abs(self.position_tracker.get("N").unwrap_or(&0) - self.position_tracker.get("S").unwrap_or(&0))
     }
@@ -83,6 +96,7 @@ fn main() -> io::Result<()> {
 
     let list: Vec<String> = reader.lines().map(|line| line.unwrap()).collect();
 
+    // Parse instructions list into tuples (COMMAND, VALUE)
     let instructions: Vec<(&str, i32)> = list.iter().map(|x| {
         lazy_static! {
             static ref RE: Regex = Regex::new(r"([A-Z])(\d+)").unwrap();
