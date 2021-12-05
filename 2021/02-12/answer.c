@@ -44,4 +44,6 @@ int get_answer (int method) {
 int main () {
     printf("Answer 1: %d\n", get_answer(1));
     printf("Answer 2: %d\n", get_answer(2));
+
+    return 0;
 }
