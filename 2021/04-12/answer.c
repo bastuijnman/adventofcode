@@ -13,6 +13,15 @@ typedef struct item {
     int index;
 } board;
 
+/**
+ * @brief Check if the haystack array contains the needles array.
+ * 
+ * @param needles - Values to check for
+ * @param needles_size - Size of the values to check for
+ * @param haystack - Values to check in
+ * @param haystack_size - Size of the values to check in
+ * @return bool 
+ */
 bool contains(int* needles, size_t needles_size, int* haystack, size_t haystack_size) {
     for (int i = 0; i < needles_size; i++) {
 
@@ -73,7 +82,7 @@ int main () {
 
     FILE *f = fopen("input.txt", "r");
 
-    // Grab all drawn bingo numbers
+    // Grab all drawn bingo numbers, read first line of input and advance pointer
     char draws[1024];
     fgets(draws, 1024, f);
 
@@ -88,39 +97,51 @@ int main () {
     board * current = first;
     while (fscanf(f, "%d %d %d %d %d", &a, &b, &c, &d, &e) == 5) {
 
-        // TODO: There has to be a better way to do this -.-
-        current->numbers[index % 5][0] = a;
-        current->numbers[index % 5][1] = b;
-        current->numbers[index % 5][2] = c;
-        current->numbers[index % 5][3] = d;
-        current->numbers[index % 5][4] = e;
+        /*
+         * As a means of not having to write out individual assignments
+         * for each of the parsed numbers we store it in a new array and
+         * copy over the memory contents into the board struct.
+         */
+        int current_numbers[5] = { a, b, c, d, e};
+        memcpy(current->numbers[index % 5], current_numbers, sizeof(current_numbers));
         
         if ((index + 1) % 5 == 0 && index != 0 && !feof(f)) {
 
-            // Memory leak waiting to happen
+            // Memory leak waiting to happen -.-
             current->next = (board *) malloc(sizeof(board));
             current = current->next;
         }
         index++;
     }
 
+    // Parse the drawn numbers as tokens
     char *token = strtok(draws, ",");
+
+    // Maintain draw index & the actual numbers, we don't know the length but 1024 should be more than enough (inefficient)
     char draw_index = 0;
     int draw_array[1024];
+
+    // Continue looping over drawn numbers while we receive them
     while (token != NULL) {
+
+        // Cast to int and store in array
         draw_array[draw_index] = atoi(token);
 
-        board * tmp = first;
-        while (tmp != NULL) {
-            if( is_solved(tmp, draw_array, draw_index + 1) ) {
-                int sum = get_inverse_sum(tmp, draw_array, draw_index + 1);
-                
+        // Loop through all boards
+        board * iter = first;
+        while (iter != NULL) {
+
+            // If a board is solved we can exit out, draw index needs to be increased to be non 0 based
+            if( is_solved(iter, draw_array, draw_index + 1) ) {
+                int sum = get_inverse_sum(iter, draw_array, draw_index + 1);
+        
                 printf("Answer 1: %d\n", sum * draw_array[draw_index]);
                 return 0;
             }
-            tmp = tmp->next;
+            iter = iter->next;
         }
 
+        // Increase draw index and grab new token if available
         draw_index++;
         token = strtok(NULL, ",");
     }
