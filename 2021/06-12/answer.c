@@ -2,15 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <time.h>
 
 typedef struct node {
-    int counter;
-    bool skip;
+    char counter;
     struct node * next;
-    struct node * previous;
 } fish;
-
 
 int simulate (int days) {
 
@@ -30,14 +26,13 @@ int simulate (int days) {
     while (token != NULL) {
         int entry = atoi(token);
         fish * new = (fish *) malloc(sizeof(fish));
-        new->skip = false;
         new->counter = entry;
 
         if (first == NULL) {
+            //printf("SIZE %ld\n", sizeof(*first));
             first = new;
             current = new;
         } else {
-            new->previous = current;
             current->next = new;
             current = new;
         }
@@ -48,33 +43,24 @@ int simulate (int days) {
     fish * last = current;
     for (int d = 0; d < days; d++) {
 
-        clock_t before = clock();
-
         fish * iter = first;
         while (iter != NULL) {
+            iter->counter--;
 
-            if (iter->skip) {
-                iter->skip = false;
-            } else {
+            if (iter->counter < 0) {
+                iter->counter = 6;
 
-                iter->counter--;
+                // Spawn new fish
+                fish * new = (fish *) malloc(sizeof(fish));
+                new->counter = 8;
 
-                if (iter->counter < 0) {
-                    iter->counter = 6;
+                // To front of the list so it doesn't get processed in the current round
+                new->next = first;
+                first = new;
 
-                    fish * new = (fish *) malloc(sizeof(fish));
-                    new->counter = 8;
-                    new->skip = true;
-
-                    last->next = new;
-                    last = new;
-
-                }
             }
             iter = iter->next;
         }
-
-        printf("Day %d took %ld miliseconds\n", d+1, (clock() - before) * 1000 / CLOCKS_PER_SEC);
     }
 
     // Count number of fish in the chain
