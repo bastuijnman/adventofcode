@@ -10,6 +10,7 @@ const answer = async () => {
         .sort((a, b) => b-a);
     
     console.log(`Answer 1: ${calories[0]}`);
+    console.log(`Answer 2: ${calories.splice(0, 3).reduce((prev, cur) => prev+cur, 0)}`);
 };
 
 answer();
