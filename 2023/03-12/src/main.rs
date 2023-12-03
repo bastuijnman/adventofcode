@@ -2,6 +2,9 @@ use std::{env, fs::read_to_string};
 
 use regex::{Regex, Captures};
 
+///
+/// Grab captures and return the position and value in a tuple
+/// 
 fn map_position_and_value(captures: Captures<'_>) -> (i32, &str) {
 
     // Get match
@@ -29,17 +32,23 @@ fn map_position_and_value(captures: Captures<'_>) -> (i32, &str) {
 fn generate_cell_positions (pos: i32, val: &str, line_len: i32, max_len: i32) -> Vec<i32> {
 
     // Make sure we can account for not providing a left offset when at the beginning of the line
-    let not_beginning_of_line: bool = pos % line_len != 0;
+    // we can simply cast the boolean since we need a max offset of 1.
+    let left_offset: i32 = (pos % line_len != 0) as i32;
+
+    // Amount of cells from start pos
+    let right_offset: i32 = val.len() as i32 + 1;
+
+    // Cell position ranges that get collected into a vector
     let cell_positions: Vec<i32> = [
 
         // Cells in row above position
-        (((pos - line_len) - not_beginning_of_line as i32)..((pos - line_len) + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+        ((pos - line_len - left_offset as i32)..((pos - line_len) + right_offset)).collect::<Vec<i32>>(),
         
         // Cells in same row as position
-        ((pos - not_beginning_of_line as i32)..(pos + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+        ((pos - left_offset as i32)..(pos + right_offset)).collect::<Vec<i32>>(),
         
         // Cells in row below position
-        (((pos + line_len) - not_beginning_of_line as i32)..((pos + line_len) + (val.len() as i32 + 1))).collect::<Vec<i32>>()
+        (((pos + line_len) - left_offset as i32)..((pos + line_len) + right_offset)).collect::<Vec<i32>>()
     ].concat().into_iter().filter(|i| *i >= 0 && *i <= max_len).collect(); // Filter out non-valid positions
 
     cell_positions
