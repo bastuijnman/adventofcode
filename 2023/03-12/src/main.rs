@@ -27,45 +27,42 @@ fn main() {
     // Get rid of newlines to make char index processing easier
     contents = contents.replace("\n", "");
 
-    // List regexes for numbers & symbols
-    let numbers = Regex::new(r"([0-9]+)").unwrap();
+    // List regexes for part numbers, symbols and gears
+    let part_numbers = Regex::new(r"([0-9]+)").unwrap();
     let symbols = Regex::new(r"[^0-9.]").unwrap();
+    let gears = Regex::new(r"(\*)").unwrap();
 
-    let sum_part_one = numbers
+    let sum_part_one = part_numbers
         .captures_iter(&contents.as_str())
         .map(map_position_and_value)
         .filter_map(|(pos, val)| {
-            for y in -1..2 {
 
-                // Get the start of the row we want to process.
-                let row_start = pos + (line_length * y);
+            let not_beginning_of_line: bool = pos % line_length != 0;
+            let cell_positions: Vec<i32> = [
 
-                // Ignore row when trying to go under first or over last
-                if row_start < 0 || row_start > contents.len() as i32 {
-                    continue;
-                }
+                // Cells in row above position
+                (((pos - line_length) - not_beginning_of_line as i32)..((pos - line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+                
+                // Cells in same row as position
+                ((pos - not_beginning_of_line as i32)..(pos + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+                
+                // Cells in row below position
+                (((pos + line_length) - not_beginning_of_line as i32)..((pos + line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>()
+            ].concat().into_iter().filter(|i| *i >= 0 && *i <= contents.len() as i32-1).collect(); // Filter out non-valid positions
 
-                // Check offset so we don't accidentally take one from a row up, otherwise
-                // offset one negative to grab char from the left of the number.
-                let offset = if row_start % line_length == 0 { 0 } else { 1 };
+            for cell in cell_positions {
+                // Grab the character to test for symbol
+                let test = contents.chars().nth(cell.try_into().unwrap()).unwrap();
 
-                // Loop over row with the number length + one to grab the char from the right
-                // of the number.
-                for x in row_start-offset..row_start+(val.len() as i32 + 1) {
-
-                    // Grab the character to test for symbol
-                    let test = contents.chars().nth(x.try_into().unwrap()).unwrap();
-
-                    // Check wether the char is a symbol.
-                    let found = match symbols.find(&test.to_string()) {
-                        Some(_val) => true,
-                        None => false
-                    };
-                    
-                    // Found a symbol so we can return it in the map
-                    if found {
-                        return Some(val.parse::<i32>().unwrap());
-                    }
+                // Check wether the char is a symbol.
+                let found = match symbols.find(&test.to_string()) {
+                    Some(_val) => true,
+                    None => false
+                };
+                
+                // Found a symbol so we can return it in the map
+                if found {
+                    return Some(val.parse::<i32>().unwrap());
                 }
             }
             
@@ -73,7 +70,6 @@ fn main() {
         })
         .fold(0, |acc, next| acc + next); // Accumulate values via fold
 
-    let gears = Regex::new(r"(\*)").unwrap();
     let sum_part_two = gears
         .captures_iter(&contents.as_str())
         .map(map_position_and_value)
@@ -81,73 +77,70 @@ fn main() {
             let mut results: Vec<i32> = Vec::new();
             let mut blocklist: Vec<i32> = Vec::new();
 
-            for y in -1..2 {
+            let not_beginning_of_line: bool = pos % line_length != 0;
+            let cell_positions: Vec<i32> = [
 
-                // Get the start of the row we want to process.
-                let row_start = pos + (line_length * y);
+                // Cells in row above position
+                (((pos - line_length) - not_beginning_of_line as i32)..((pos - line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+                
+                // Cells in same row as position
+                ((pos - not_beginning_of_line as i32)..(pos + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+                
+                // Cells in row below position
+                (((pos + line_length) - not_beginning_of_line as i32)..((pos + line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>()
+            ].concat().into_iter().filter(|i| *i >= 0 && *i <= contents.len() as i32-1).collect(); // Filter out non-valid positions
 
-                // Ignore row when trying to go under first or over last
-                if row_start < 0 || row_start > contents.len() as i32 {
+            for cell in cell_positions {
+
+                // If we've already processed this number skip the cell
+                if blocklist.contains(&cell) {
                     continue;
                 }
 
-                // Check offset so we don't accidentally take one from a row up, otherwise
-                // offset one negative to grab char from the left of the number.
-                let offset = if row_start % line_length == 0 { 0 } else { 1 };
+                // Grab the character to test for symbol
+                let test = contents.chars().nth(cell.try_into().unwrap()).unwrap();
 
-                // Loop over row with the number length + one to grab the char from the right
-                // of the number.
-                for x in row_start-offset..row_start+(val.len() as i32 + 1) {
+                // If cell is not a number we can ignore it.
+                if part_numbers.find(&test.to_string()).is_none() {
+                    continue;
+                }
 
-                    // If we've already processed this number skip the cell
-                    if blocklist.contains(&x) {
-                        continue;
+                // Track offsets for grabbing the entire number
+                let mut offset_left:i32 = cell;
+                let mut offset_right:i32 = cell;
+                    
+                // Spread out left while we find numbers
+                while offset_left > 0 {
+                    let test = contents.chars().nth(offset_left as usize - 1).unwrap();
+
+                    // No more number cells, stop loop
+                    if part_numbers.find(&test.to_string()).is_none() {
+                        break;
                     }
+                    offset_left -= 1;
+                }
 
-                    // Grab the character to test for symbol
-                    let test = contents.chars().nth(x.try_into().unwrap()).unwrap();
+                // Spread out right while we find numbers
+                while offset_right < contents.len() as i32 {
+                    let test = contents.chars().nth(offset_right as usize).unwrap();
 
-                    // Track offsets for grabbing the entire number
-                    let mut offset_left:i32 = x;
-                    let mut offset_right:i32 = x;
-
-                    // Check if the cell is a number
-                    if numbers.find(&test.to_string()).is_some() {
-                        
-                        // Spread out left while we find numbers
-                        while offset_left > 0 {
-                            let test = contents.chars().nth(offset_left as usize - 1).unwrap();
-
-                            // No more number cells, stop loop
-                            if numbers.find(&test.to_string()).is_none() {
-                                break;
-                            }
-                            offset_left -= 1;
-                        }
-
-                        // Spread out right while we find numbers
-                        while offset_right < contents.len() as i32 {
-                            let test = contents.chars().nth(offset_right as usize).unwrap();
-
-                            // No more number cells, stop loop.
-                            if numbers.find(&test.to_string()).is_none() {
-                                break;
-                            }
-                            offset_right += 1;
-                        }
-
-                        // Grab substring based on offsets 
-                        let result = contents.get(offset_left as usize..offset_right as usize);
-                        if result.is_some() {
-
-                            // Add processed cells to blocklist
-                            let offsets: Vec<i32> = (offset_left..offset_right).collect();
-                            blocklist = [blocklist, offsets].concat();
-
-                            // Push result into vec
-                            results.push(result.unwrap().parse::<i32>().unwrap());
-                        }
+                    // No more number cells, stop loop.
+                    if part_numbers.find(&test.to_string()).is_none() {
+                        break;
                     }
+                    offset_right += 1;
+                }
+
+                // Grab substring based on offsets 
+                let result = contents.get(offset_left as usize..offset_right as usize);
+                if result.is_some() {
+
+                    // Add processed cells to blocklist
+                    let offsets: Vec<i32> = (offset_left..offset_right).collect();
+                    blocklist = [blocklist, offsets].concat();
+
+                    // Push result into vec
+                    results.push(result.unwrap().parse::<i32>().unwrap());
                 }
             }
 
