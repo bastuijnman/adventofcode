@@ -1,6 +1,20 @@
 use std::{env, fs::read_to_string};
 
-use regex::Regex;
+use regex::{Regex, Captures};
+
+fn map_position_and_value(captures: Captures<'_>) -> (i32, &str) {
+
+    // Get match
+    let m = captures.get(1).unwrap();
+
+    // Get match position (string index where the match starts)
+    let pos:i32 = m.start() as i32;
+
+    // Get actual value.
+    let val = m.as_str();
+
+    (pos, val)
+}
 
 fn main() {
     
@@ -19,21 +33,9 @@ fn main() {
 
     let sum_part_one = numbers
         .captures_iter(&contents.as_str())
-        .filter_map(|c| {
-
-            // Get match
-            let m = c.get(1).unwrap();
-
-            // Get match position (string index where the match starts)
-            let pos:i32 = m.start() as i32;
-
-            // Get actual value.
-            let val = m.as_str();
-
-            // Generate range for rows, which apparently doesn't work nicely when just putting the range in the for loop?
-            let range:Vec<i32> = (-1..2).collect();
-
-            for y in range {
+        .map(map_position_and_value)
+        .filter_map(|(pos, val)| {
+            for y in -1..2 {
 
                 // Get the start of the row we want to process.
                 let row_start = pos + (line_length * y);
@@ -74,24 +76,12 @@ fn main() {
     let gears = Regex::new(r"(\*)").unwrap();
     let sum_part_two = gears
         .captures_iter(&contents.as_str())
-        .filter_map(|c| {
-
-            // Get match
-            let m = c.get(1).unwrap();
-
-            // Get match position (string index where the match starts)
-            let pos:i32 = m.start() as i32;
-
-            // Get actual value.
-            let val = m.as_str();
-
-            // Generate range for rows, which apparently doesn't work nicely when just putting the range in the for loop?
-            let range:Vec<i32> = (-1..2).collect();
-
+        .map(map_position_and_value)
+        .filter_map(|(pos, val)| {
             let mut results: Vec<i32> = Vec::new();
             let mut blocklist: Vec<i32> = Vec::new();
 
-            for y in range {
+            for y in -1..2 {
 
                 // Get the start of the row we want to process.
                 let row_start = pos + (line_length * y);
