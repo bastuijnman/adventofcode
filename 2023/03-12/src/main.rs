@@ -16,6 +16,35 @@ fn map_position_and_value(captures: Captures<'_>) -> (i32, &str) {
     (pos, val)
 }
 
+///
+/// Generates a vec with the cell position surrounding (including the cells of the value itself) 
+/// the value based on it's position.
+/// 
+/// # Arguments
+/// * `pos` the position where the value is found
+/// * `val` the value which we want to get the surrounding cells for
+/// * `line_len` the length for a line in the input
+/// * `max_len` the max length of the input
+/// 
+fn generate_cell_positions (pos: i32, val: &str, line_len: i32, max_len: i32) -> Vec<i32> {
+
+    // Make sure we can account for not providing a left offset when at the beginning of the line
+    let not_beginning_of_line: bool = pos % line_len != 0;
+    let cell_positions: Vec<i32> = [
+
+        // Cells in row above position
+        (((pos - line_len) - not_beginning_of_line as i32)..((pos - line_len) + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+        
+        // Cells in same row as position
+        ((pos - not_beginning_of_line as i32)..(pos + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
+        
+        // Cells in row below position
+        (((pos + line_len) - not_beginning_of_line as i32)..((pos + line_len) + (val.len() as i32 + 1))).collect::<Vec<i32>>()
+    ].concat().into_iter().filter(|i| *i >= 0 && *i <= max_len).collect(); // Filter out non-valid positions
+
+    cell_positions
+}
+
 fn main() {
     
     // Grab first argument (after binary) as file name and read into string
@@ -37,31 +66,14 @@ fn main() {
         .map(map_position_and_value)
         .filter_map(|(pos, val)| {
 
-            let not_beginning_of_line: bool = pos % line_length != 0;
-            let cell_positions: Vec<i32> = [
-
-                // Cells in row above position
-                (((pos - line_length) - not_beginning_of_line as i32)..((pos - line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
-                
-                // Cells in same row as position
-                ((pos - not_beginning_of_line as i32)..(pos + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
-                
-                // Cells in row below position
-                (((pos + line_length) - not_beginning_of_line as i32)..((pos + line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>()
-            ].concat().into_iter().filter(|i| *i >= 0 && *i <= contents.len() as i32-1).collect(); // Filter out non-valid positions
-
+            // Generate cell positions
+            let cell_positions: Vec<i32> = generate_cell_positions(pos, val, line_length, contents.len() as i32-1);
             for cell in cell_positions {
                 // Grab the character to test for symbol
                 let test = contents.chars().nth(cell.try_into().unwrap()).unwrap();
 
-                // Check wether the char is a symbol.
-                let found = match symbols.find(&test.to_string()) {
-                    Some(_val) => true,
-                    None => false
-                };
-                
-                // Found a symbol so we can return it in the map
-                if found {
+                // Check wether the char is a symbol, if so return the value as an integer
+                if symbols.find(&test.to_string()).is_some() {
                     return Some(val.parse::<i32>().unwrap());
                 }
             }
@@ -77,19 +89,8 @@ fn main() {
             let mut results: Vec<i32> = Vec::new();
             let mut blocklist: Vec<i32> = Vec::new();
 
-            let not_beginning_of_line: bool = pos % line_length != 0;
-            let cell_positions: Vec<i32> = [
-
-                // Cells in row above position
-                (((pos - line_length) - not_beginning_of_line as i32)..((pos - line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
-                
-                // Cells in same row as position
-                ((pos - not_beginning_of_line as i32)..(pos + (val.len() as i32 + 1))).collect::<Vec<i32>>(),
-                
-                // Cells in row below position
-                (((pos + line_length) - not_beginning_of_line as i32)..((pos + line_length) + (val.len() as i32 + 1))).collect::<Vec<i32>>()
-            ].concat().into_iter().filter(|i| *i >= 0 && *i <= contents.len() as i32-1).collect(); // Filter out non-valid positions
-
+            // Generate cell positions
+            let cell_positions: Vec<i32> = generate_cell_positions(pos, val, line_length, contents.len() as i32-1);
             for cell in cell_positions {
 
                 // If we've already processed this number skip the cell
