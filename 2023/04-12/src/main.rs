@@ -1,4 +1,4 @@
-use std::{env, fs::read_to_string};
+use std::{env, fs::read_to_string, collections::HashMap, cmp};
 
 use regex::Regex;
 
@@ -109,41 +109,56 @@ fn main() {
         .iter()
         .fold(0, |acc, card| acc + card.get_point_value());
 
-    // Clone cards and make sure it's mutable
-    let mut second_cards = cards.clone();
+    // Store total number of cards available
+    let length = cards.len();
 
-    // Retain total number or cards
-    let mut total: u32 = 0;
+    // Keep a cache of the number of winnings per card
+    let winnings_cache: HashMap<usize, usize> = cards.iter().map(|c| (c.id, c.get_won_cards().len())).collect();
+
+    // Keep an incrementing index
     let mut index = 0;
 
-    // Loop until we have no more cards to check
-    // This is very sub-optimal, it's better to count this on the original card instances
-    // but can't be arsed right now.
-    let sum_part_two = loop {
+    // Keep track of how many cards we won per card
+    let mut incrementer:Vec<usize> = vec![0; cards.len()];
 
-        // No more value from the cards vec, can return the total value
-        if second_cards.get(index).is_none() {
-            break total;
-        }
+    // Keep track of the cards we've finished processing
+    let mut finished_total = 0;
 
-        // Get card at current index
-        let game = &second_cards[index];
+    loop {
 
-        // Check which cards we have won
-        let num_won = game.get_won_cards().len();
+        // Check if we still have cards to process at index, use modulo with length
+        // to make sure we loop over the total number of cards in the input over and
+        // over again 
+        if incrementer[index % length] >= index / length {
+            finished_total = 0;
 
-        // Loop through the cards we've won and add them to the vec we're using for the loop
-        for i in (game.id + 1)..(game.id + 1 + num_won) {
-            if second_cards.get(i - 1).is_some() {
-                second_cards.append(&mut vec![second_cards[i - 1].clone()]);
+            // Get card at current index
+            let card = &cards[index % length];
+            
+            // Grab the number of winnings from cache
+            let num_won = winnings_cache[&card.id];
 
-                // Count the card we processed/added
-                total += 1;
+            // Loop through the cards we've won and add them to the respective index in the incrementor
+            // we can treat the card id here as the start since it's already 1-based as opposed to
+            // the index we keep track of.
+            for i in (card.id)..cmp::min(card.id + num_won, length) {
+                incrementer[i] += 1;
+            }
+        } else {
+
+            // No more card to process at index, so mark one as finished.
+            finished_total += 1;
+
+            // If we've marked all cards as finished we can break the loop
+            if finished_total == length {
+                break;
             }
         }
-        index += 1;
-    } + cards.len() as u32; // combine counted cards + initial amount
 
+        // Increment index
+        index += 1;
+    };
+    let sum_part_two = incrementer.iter().fold(0, |acc, next| acc + next) + cards.len(); // combine counted cards + initial amount
 
     println!("Answer part one: {}", sum_part_one);
     println!("Answer part two: {}", sum_part_two);
