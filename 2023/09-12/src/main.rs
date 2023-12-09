@@ -1,29 +1,51 @@
 use std::{fs::read_to_string, env};
 
+///
+/// Calculate the next value of a history vec of numbers
+/// 
 fn calculate_next_value(numbers: Vec<i32>) -> i32 {
+
+    // Make sure we can modify our sequence in the loop later
     let mut sequence = numbers.clone();
+
+    // Keep a list of the last numbers for all sequences we're processing
     let mut last_numbers = vec![*sequence.last().unwrap()];
 
     loop {
+
+        // Clone the current sequence in order to dedup
         let mut check = sequence.clone();
         check.dedup();
 
+        // When we only have 1 item in our deduped list we've reached the
+        // last sequence
         if check.len() == 1 {
             break;
         }
 
-        let l = sequence.clone();
+        // Grab all values from the current sequence and clear it for
+        // re-fill
+        let values: Vec<i32> = sequence.clone();
         sequence.clear();
-        for i in 0..l.len() - 1 {
-            let val = l[i + 1] - l[i];
-            sequence.push(val);
 
-            if i + 2 == l.len() {
-                last_numbers.push(val);
+        // Loop through all values - 1 in order to be able to find the
+        // difference
+        for i in 0..values.len() - 1 {
+
+            // Calculate difference and push into sequence
+            let value = values[i + 1] - values[i];
+            sequence.push(value);
+
+            // If we've reached the end of the sequence (0-based index + 2 to 
+            // correlate with the original length) we push it into our vector
+            // containing all last numbers of sequences.
+            if i + 2 == values.len() {
+                last_numbers.push(value);
             }
         }
     };
 
+    // Sum all the last numbers for the result.
     last_numbers.iter().sum()
 
 }
@@ -33,12 +55,14 @@ fn main() {
     // Grab first argument (after binary) as file name and read into string
     let contents: String = read_to_string(env::args().nth(1).unwrap()).unwrap();
 
+    // Map the lines to a list of numbers and calculate their next value
     let answer_part_one: i32 = contents
         .lines()
         .map(|s| s.split(' ').map(|s| s.parse::<i32>().unwrap()).collect::<Vec<i32>>())
         .map(|numbers| calculate_next_value(numbers))
         .sum();
 
+    // Map the lines to a list of numbers and calculate their next value, this one reverses the input line.
     let answer_part_two: i32 = contents
         .lines()
         .map(|s| s.split(' ').rev().map(|s| s.parse::<i32>().unwrap()).collect::<Vec<i32>>())
