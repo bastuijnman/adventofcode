@@ -18,26 +18,27 @@ fn calculate_next_value(numbers: Vec<i32>) -> i32 {
             break;
         }
 
-        // Grab all values from the current sequence and clear it for
-        // re-fill
-        let values: Vec<i32> = sequence.clone();
-        sequence.clear();
+        // Grab the current length of the sequence
+        let length = sequence.len();
 
         // Loop through all values - 1 in order to be able to find the
         // difference
-        for i in 0..values.len() - 1 {
+        for i in 0..length - 1 {
 
             // Calculate difference and push into sequence
-            let value = values[i + 1] - values[i];
+            let value = sequence[i + 1] - sequence[i];
             sequence.push(value);
 
             // If we've reached the end of the sequence (0-based index + 2 to 
             // correlate with the original length) we push it into our vector
             // containing all last numbers of sequences.
-            if i + 2 == values.len() {
+            if i + 2 == length {
                 last_numbers.push(value);
             }
         }
+
+        // Make sure the sequence is only the part we just processed
+        sequence = sequence.get(length..).unwrap().to_vec();
     };
 
     // Sum all the last numbers for the result.
