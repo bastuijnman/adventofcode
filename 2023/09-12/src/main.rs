@@ -13,13 +13,8 @@ fn calculate_next_value(numbers: Vec<i32>) -> i32 {
 
     loop {
 
-        // Clone the current sequence in order to dedup
-        let mut check = sequence.clone();
-        check.dedup();
-
-        // When we only have 1 item in our deduped list we've reached the
-        // last sequence
-        if check.len() == 1 {
+        // Breka out of the loop if all sequence numbers are the same
+        if sequence.iter().filter(|n| **n != sequence[0]).count() == 0 {
             break;
         }
 
