@@ -1,6 +1,8 @@
 # Advent of Code
 
-Contains solutions to advent of code challenge
+Contains solutions to advent of code challenge, each day is represented by it's own project/package/whatever within the folder of the year.
+
+Challenge is to use a new language each year.
 
 ## Years
 
