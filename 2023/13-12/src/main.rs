@@ -1,5 +1,6 @@
-use std::{char, cmp::min, env, fs::read_to_string};
+use std::{char, cmp::min, env, fs::read_to_string, usize};
 
+#[derive(Clone)]
 struct Pattern {
     chars: Vec<char>,
     rows: usize,
@@ -19,14 +20,18 @@ impl Pattern {
             .collect()
     }
 
-    fn row_reflection(&self) -> usize {
+    fn row_reflection(&self, mut exclude: usize) -> usize {
+        if exclude == 0 {
+            exclude = usize::MAX;
+        }
+
         let potential_reflections: Vec<(usize, bool)> = (0..self.rows - 1)
-            .map(|row| self.row(row) == self.row(row + 1))
+            .map(|row| self.row(row) == self.row(row + 1) && row != exclude - 1)
             .enumerate()
             .filter(|(_, row)| *row)
             .collect();
 
-        for (idx, _) in potential_reflections.iter().rev() {
+        for (idx, _) in potential_reflections.iter() {
             let offset = min(*idx, self.rows - (idx + 2));
 
             let a: Vec<Vec<char>> = (idx - offset..=*idx).map(|i| self.row(i)).collect();
@@ -44,14 +49,18 @@ impl Pattern {
         0
     }
 
-    fn col_reflection(&self) -> usize {
+    fn col_reflection(&self, mut exclude: usize) -> usize {
+        if exclude == 0 {
+            exclude = usize::MAX;
+        }
+
         let potential_reflections: Vec<(usize, bool)> = (0..self.cols - 1)
-            .map(|col| self.col(col) == self.col(col + 1))
+            .map(|col| self.col(col) == self.col(col + 1) && col != exclude - 1)
             .enumerate()
             .filter(|(_, col)| *col)
             .collect();
 
-        for (idx, _) in potential_reflections.iter().rev() {
+        for (idx, _) in potential_reflections.iter() {
             let offset = min(*idx, self.cols - (idx + 2));
 
             let a: Vec<Vec<char>> = (idx - offset..=*idx).map(|i| self.col(i)).collect();
@@ -66,6 +75,34 @@ impl Pattern {
             }
         }
         0
+    }
+
+    fn fix_smudges(&mut self) {
+        let cc = self.col_reflection(usize::MAX);
+        let cr = self.row_reflection(usize::MAX);
+
+        // Inefficient as shit
+        for i in 0..self.chars.len() {
+            self.chars[i] = match self.chars[i] {
+                '.' => '#',
+                '#' => '.',
+                _ => '_',
+            };
+
+            let c = self.col_reflection(cc);
+            let r = self.row_reflection(cr);
+            if (cc != c && c != 0) || (r != cr && r != 0) {
+                return;
+            }
+
+            // Revert if not found
+            self.chars[i] = match self.chars[i] {
+                '.' => '#',
+                '#' => '.',
+                _ => '_',
+            };
+        }
+        println!("NO SMUDGES FOUND");
     }
 }
 
@@ -86,13 +123,38 @@ fn main() {
     let contents: String = read_to_string(env::args().nth(1).unwrap()).unwrap();
 
     let patterns: Vec<Pattern> = contents.split("\n\n").map(parse_pattern).collect();
-    let reflections: (usize, usize) =
-        patterns.iter().fold((0, 0), |(col_acc, row_acc), pattern| {
-            (
-                col_acc + pattern.col_reflection(),
-                row_acc + pattern.row_reflection(),
-            )
+
+    let reflections: Vec<[usize; 2]> = patterns
+        .iter()
+        .map(|pattern| {
+            [
+                pattern.col_reflection(usize::MAX),
+                pattern.row_reflection(usize::MAX),
+            ]
+        })
+        .collect();
+
+    let sums = reflections
+        .iter()
+        .fold((0, 0), |(col_acc, row_acc), reflection| {
+            (col_acc + reflection[0], row_acc + reflection[1])
         });
 
-    println!("Answer part 1: {}", reflections.0 + (reflections.1 * 100));
+    println!("Answer part 1: {}", sums.0 + (sums.1 * 100));
+
+    let mut fixed_patterns = patterns.clone();
+    fixed_patterns.iter_mut().for_each(|p| p.fix_smudges());
+
+    let reflections: (usize, usize) =
+        fixed_patterns
+            .iter()
+            .enumerate()
+            .fold((0, 0), |(col_acc, row_acc), (i, pattern)| {
+                let cr = pattern.col_reflection(reflections[i][0]);
+                let rr = pattern.row_reflection(reflections[i][1]);
+
+                (col_acc + cr, row_acc + rr)
+            });
+
+    println!("Answer part 2: {}", reflections.0 + (reflections.1 * 100));
 }
