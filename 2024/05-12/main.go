@@ -37,69 +37,27 @@ func parse(input string, sep string) ([][]int, error) {
 	return rules, nil
 }
 
-// Check wether the update contains the rule numbers. Basically
-// syntatic sugar so I didn't have to write 2 contains statements
-// in an if statement... (what a win I know...)
-func updateContainsRuleNumbers(update []int, rule []int) bool {
-	for _, ruleNumber := range rule {
-		if !slices.Contains(update, ruleNumber) {
-			return false
-		}
-	}
-	return true
-}
-
-// Check if an update complies with the rules
-func isUpdateValidForRules(update []int, rules [][]int) bool {
-
+func parseRulesIntoMap(rules [][]int) map[int][]int {
+	ruleMap := make(map[int][]int)
 	for _, rule := range rules {
-
-		// Skip if the rule does not apply
-		if !updateContainsRuleNumbers(update, rule) {
-			continue
-		}
-
-		if slices.Index(update, rule[0]) > slices.Index(update, rule[1]) {
-			return false
-		}
+		ruleMap[rule[0]] = append(ruleMap[rule[0]], rule[1])
 	}
-	return true
+	return ruleMap
 }
 
-// Take an update and rules and make them compliant.
-func makeUpdateCompliant(update []int, rules [][]int) []int {
-	for i := 0; i < len(update); i++ {
-
-		// By default we assume the numbers are not found in the rules
-		lowest := -1
-		value := update[i]
-
-		// Loop over all rules, if we find the
-		for _, rule := range rules {
-
-			// Ignore rules that don't apply anyway
-			if rule[0] != update[i] {
-				continue
-			}
-
-			// Find the index of the second part of the rule
-			// if found and lower than the current lowest we
-			// treat it as the new lowest index
-			l := slices.Index(update, rule[1])
-			if l != -1 && (lowest == -1 || l < lowest) {
-				lowest = l
-			}
+func makeUpdateCompliant(update []int, rules map[int][]int) []int {
+	slices.SortFunc(update, func(a int, b int) int {
+		before := rules[a]
+		if len(before) == 0 {
+			return 0
 		}
 
-		// If we have a new lowest index move the current value
-		// into that index instead, making it comply with the
-		// processed rule
-		if lowest != -1 && lowest < i {
-			update = slices.Delete(update, i, i+1)
-			update = slices.Insert(update, lowest, value)
+		if slices.Contains(before, b) {
+			return -1
+		} else {
+			return 1
 		}
-
-	}
+	})
 
 	return update
 }
@@ -126,12 +84,15 @@ func main() {
 
 	countPartOne := 0
 	countPartTwo := 0
+
+	rulesMap := parseRulesIntoMap(rules)
 	for _, update := range updates {
-		if isUpdateValidForRules(update, rules) {
-			countPartOne += update[len(update)/2]
+		clone := slices.Clone(update)
+		fixed := makeUpdateCompliant(update, rulesMap)
+		if slices.Compare(clone, fixed) == 0 {
+			countPartOne += fixed[len(fixed)/2]
 		} else {
-			fixedUpdate := makeUpdateCompliant(update, rules)
-			countPartTwo += fixedUpdate[len(fixedUpdate)/2]
+			countPartTwo += fixed[len(fixed)/2]
 		}
 	}
 
