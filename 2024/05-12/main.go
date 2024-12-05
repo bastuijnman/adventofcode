@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// Parse input into a 2-dimensional int slice
 func parse(input string, sep string) ([][]int, error) {
 	var rules [][]int
 
@@ -36,6 +37,9 @@ func parse(input string, sep string) ([][]int, error) {
 	return rules, nil
 }
 
+// Check wether the update contains the rule numbers. Basically
+// syntatic sugar so I didn't have to write 2 contains statements
+// in an if statement... (what a win I know...)
 func updateContainsRuleNumbers(update []int, rule []int) bool {
 	for _, ruleNumber := range rule {
 		if !slices.Contains(update, ruleNumber) {
@@ -45,6 +49,7 @@ func updateContainsRuleNumbers(update []int, rule []int) bool {
 	return true
 }
 
+// Check if an update complies with the rules
 func isUpdateValidForRules(update []int, rules [][]int) bool {
 
 	for _, rule := range rules {
@@ -59,6 +64,44 @@ func isUpdateValidForRules(update []int, rules [][]int) bool {
 		}
 	}
 	return true
+}
+
+// Take an update and rules and make them compliant.
+func makeUpdateCompliant(update []int, rules [][]int) []int {
+	for i := 0; i < len(update); i++ {
+
+		// By default we assume the numbers are not found in the rules
+		lowest := -1
+		value := update[i]
+
+		// Loop over all rules, if we find the
+		for _, rule := range rules {
+
+			// Ignore rules that don't apply anyway
+			if rule[0] != update[i] {
+				continue
+			}
+
+			// Find the index of the second part of the rule
+			// if found and lower than the current lowest we
+			// treat it as the new lowest index
+			l := slices.Index(update, rule[1])
+			if l != -1 && (lowest == -1 || l < lowest) {
+				lowest = l
+			}
+		}
+
+		// If we have a new lowest index move the current value
+		// into that index instead, making it comply with the
+		// processed rule
+		if lowest != -1 && lowest < i {
+			update = slices.Delete(update, i, i+1)
+			update = slices.Insert(update, lowest, value)
+		}
+
+	}
+
+	return update
 }
 
 func main() {
@@ -81,13 +124,18 @@ func main() {
 		return
 	}
 
-	count := 0
+	countPartOne := 0
+	countPartTwo := 0
 	for _, update := range updates {
 		if isUpdateValidForRules(update, rules) {
-			count += update[len(update)/2]
+			countPartOne += update[len(update)/2]
+		} else {
+			fixedUpdate := makeUpdateCompliant(update, rules)
+			countPartTwo += fixedUpdate[len(fixedUpdate)/2]
 		}
 	}
 
-	fmt.Println("Answer part one", count)
+	fmt.Println("Answer part one", countPartOne)
+	fmt.Println("Answer part two", countPartTwo)
 
 }
