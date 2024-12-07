@@ -33,8 +33,8 @@ func main() {
 	rightList := make([]int, lineCount)
 	similarityMap := make(map[int]int)
 
-	// Current nvim setup always adds a newline to the end of a file
-	// need to account for that -.-
+	// Account for the EOL newline that POSIX demands
+	// this shoul've been a buffer scanner
 	for i := 0; i < len(lines)-1; i++ {
 		values := strings.Split(lines[i], "   ")
 

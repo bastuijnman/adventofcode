@@ -15,7 +15,8 @@ func parse(input string, sep string) ([][]int, error) {
 	entries := strings.Split(input, "\n")
 	for _, entry := range entries {
 
-		// Check for pesky added newlines from neovim
+		// Entries can contain the EOF newline char that POSIX
+		// demands. We can ignore that one
 		if entry == "" {
 			continue
 		}
