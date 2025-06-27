@@ -11,7 +11,7 @@ const (
 
 type Edge struct {
 	Index    int
-	location EdgeLocation
+	Location EdgeLocation
 }
 
 func Edges(index int, cols int, rows int) []Edge {
@@ -21,7 +21,7 @@ func Edges(index int, cols int, rows int) []Edge {
 	if index-cols >= 0 {
 		edges = append(edges, Edge{
 			Index:    index - cols,
-			location: TopEdge,
+			Location: TopEdge,
 		})
 	}
 
@@ -29,7 +29,7 @@ func Edges(index int, cols int, rows int) []Edge {
 	if (index+1)%cols != 0 {
 		edges = append(edges, Edge{
 			Index:    index + 1,
-			location: RightEdge,
+			Location: RightEdge,
 		})
 	}
 
@@ -37,7 +37,7 @@ func Edges(index int, cols int, rows int) []Edge {
 	if index+cols < cols*rows {
 		edges = append(edges, Edge{
 			Index:    index + cols,
-			location: BottomEdge,
+			Location: BottomEdge,
 		})
 	}
 
@@ -45,7 +45,7 @@ func Edges(index int, cols int, rows int) []Edge {
 	if index%cols != 0 {
 		edges = append(edges, Edge{
 			Index:    index - 1,
-			location: LeftEdge,
+			Location: LeftEdge,
 		})
 	}
 
