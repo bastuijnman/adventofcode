@@ -4,92 +4,34 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strings"
+	"strconv"
 )
 
-type TrailMap struct {
-	contents []int
-	height   int
-	width    int
-}
+// Refactor
+func edges(index int, cols int, rows int) []int {
+	var edges []int
 
-type TrailPathNode struct {
-	index int
-	next  []TrailPathNode
-}
-
-func parseTrailMap(trailMap string) []int {
-	var entries []int
-	for _, c := range trailMap {
-		entries = append(entries, int(c-'0'))
-	}
-	fmt.Println(entries)
-	return entries
-}
-
-func findTrailPositions(trailMap []int, needle int) []int {
-	var trailHeads []int
-	for idx, c := range trailMap {
-		if c == needle {
-			trailHeads = append(trailHeads, idx)
-		}
-	}
-	return trailHeads
-}
-
-func getValidNeighbours(trailMap TrailMap, index int) []TrailPathNode {
-	directions := [4]int{-trailMap.width, 1, trailMap.width, -1}
-	var nodes []TrailPathNode
-
-	for _, direction := range directions {
-		check := index + direction
-
-		// TODO: these checks can be optimised
-		if check < 0 || check >= trailMap.width*trailMap.height {
-			continue
-		}
-		if index%trailMap.width == 0 && direction == -1 {
-			continue
-		}
-		if index+1%trailMap.width == 0 && direction == 1 {
-			continue
-		}
-
-		if trailMap.contents[check]-trailMap.contents[index] != 1 {
-			continue
-		}
-		nodes = append(nodes, TrailPathNode{
-			index: check,
-			next:  getValidNeighbours(trailMap, check),
-		})
+	// Top
+	if index-cols >= 0 {
+		edges = append(edges, index-cols)
 	}
 
-	return nodes
-}
-
-func getAllDestinations(start TrailPathNode, trailMap TrailMap) []int {
-	var total []int
-
-	if len(start.next) == 0 && trailMap.contents[start.index] == 9 {
-		total = append(total, start.index)
+	// Right
+	if (index+1)%cols != 0 {
+		edges = append(edges, index+1)
 	}
 
-	for _, n := range start.next {
-		nu := getAllDestinations(n, trailMap)
-		total = append(total, nu...)
+	// Bottom
+	if index+cols < cols*rows {
+		edges = append(edges, index+cols)
 	}
 
-	return total
-}
-
-func unique(slice []int) []int {
-	var result []int
-	for _, val := range slice {
-		if !slices.Contains(result, val) {
-			result = append(result, val)
-		}
+	// Left
+	if index%cols != 0 {
+		edges = append(edges, index-1)
 	}
-	return result
+
+	return edges
 }
 
 func main() {
@@ -103,30 +45,55 @@ func main() {
 		return
 	}
 
-	trailMapData := string(data)
-	lines := strings.Split(trailMapData, "\n")
-	cols := len(lines[0])
-	rows := len(lines) - 1 // Ignore newline at EOF that POSIX demands
+	// Get rid of newlines
+	cols := slices.Index(data, 10)
+	levels := slices.DeleteFunc(data, func(v byte) bool { return v == 10 })
+	rows := len(levels) / cols
 
-	trailMapData = strings.ReplaceAll(trailMapData, "\n", "")
-	trailMap := TrailMap{
-		contents: parseTrailMap(trailMapData),
-		width:    cols,
-		height:   rows,
-	}
-
-	trailHeads := findTrailPositions(trailMap.contents, 0)
-	total := 0
-	for _, trailHead := range trailHeads {
-		trail := TrailPathNode{
-			index: trailHead,
-			next:  getValidNeighbours(trailMap, trailHead),
+	var follow_path func(indices []int, n int, distinct_trails bool) []int
+	follow_path = func(indices []int, n int, distinct_trails bool) []int {
+		if n == 9 {
+			return indices
 		}
 
-		uniqueDestinations := unique(getAllDestinations(trail, trailMap))
-		total += len(uniqueDestinations)
+		var indices_to_test []int
+		for _, i := range indices {
+			var next []int
+			for _, e := range edges(i, cols, rows) {
+				if levels[e] == strconv.Itoa(n + 1)[0] {
+					next = append(next, e)
+				}
+			}
+
+			indices_to_test = slices.Concat(indices_to_test, follow_path(next, n+1, distinct_trails))
+
+			// If we don't want the distinct trails we only care about the unique indices
+			// of the tested edges. This will give us just the unique destinations.
+			if !distinct_trails {
+				slices.Sort(indices_to_test)
+				indices_to_test = slices.Compact(indices_to_test)
+			}
+		}
+
+		return indices_to_test
 	}
 
-	fmt.Println("Answer part one:", total)
+	var starts []int
+	for i, n := range levels {
+		if n == '0' {
+			starts = append(starts, i)
+		}
+	}
 
+	trails := 0
+	for _, idx := range starts {
+		trails += len(follow_path([]int{idx}, 0, false))
+	}
+
+	distinct_trails := 0
+	for _, idx := range starts {
+		distinct_trails += len(follow_path([]int{idx}, 0, true))
+	}
+	fmt.Println("Answer part one:", trails)
+	fmt.Println("Answer part two:", distinct_trails)
 }
