@@ -1,5 +1,7 @@
 package lib
 
+import "errors"
+
 type EdgeLocation int
 
 const (
@@ -50,4 +52,13 @@ func Edges(index int, cols int, rows int) []Edge {
 	}
 
 	return edges
+}
+
+func GetEdge(edges []Edge, location EdgeLocation) (Edge, error) {
+	for _, edge := range edges {
+		if edge.Location == location {
+			return edge, nil
+		}
+	}
+	return Edge{}, errors.New("Edge not found")
 }

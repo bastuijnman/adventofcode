@@ -64,10 +64,45 @@ func main() {
 		return total
 	}
 
+	calcEdgeCount := func(indices []int, edge lib.EdgeLocation) int {
+		var result []int
+
+		diff := 1
+		if edge == lib.LeftEdge || edge == lib.RightEdge {
+			diff = cols
+		}
+		for _, index := range indices {
+			topEdge, err := lib.GetEdge(lib.Edges(index, cols, rows), edge)
+			if err != nil || levels[index] != levels[topEdge.Index] {
+				i := slices.Index(result, index-diff)
+				if i == -1 {
+					result = append(result, index)
+				} else {
+					result[i] = index
+				}
+			}
+		}
+		return len(result)
+	}
+
 	// Calculate sides for any given garden plot
-	var calcSides func(plot GardenPlot) int
-	calcSides = func(plot GardenPlot) int {
-		total := 0
+	calcSides := func(plot GardenPlot) int {
+		var edges = []lib.EdgeLocation{
+			lib.TopEdge,
+			lib.RightEdge,
+			lib.BottomEdge,
+			lib.LeftEdge,
+		}
+		var indices []int
+		indices = make([]int, len(plot.indices))
+
+		copy(indices, plot.indices)
+		slices.Sort(indices)
+
+		var total int
+		for _, edge := range edges {
+			total += calcEdgeCount(indices, edge)
+		}
 		return total
 	}
 
