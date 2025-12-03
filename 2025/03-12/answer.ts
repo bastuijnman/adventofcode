@@ -3,18 +3,27 @@ import fs from 'fs/promises';
 const maxJoltage = (bank: string[], desiredNumberOfBatteries: number = 2): number => {
     let result = '';
     let startIndex = 0;
-    for (let i = 0; i < desiredNumberOfBatteries; i++) {
-        let biggest = 0;
-        // Find first biggest value
-        for (let j = startIndex; j < bank.length; j++) {
-            let val = parseInt(bank[i], 10);
-            if (val > biggest && bank.length - i >= desiredNumberOfBatteries - j) {
-                biggest = val;
+
+    // Construct the desired battery length
+    for (let currentBatteryPosition = 0; currentBatteryPosition < desiredNumberOfBatteries; currentBatteryPosition++) {
+        let biggestJoltage = 0;
+
+        // Find the next biggest possible value
+        for (let i = startIndex; i < bank.length; i++) {
+            const joltage = parseInt(bank[i], 10);
+
+            // Only mark as biggest if it's bigger and we can still construct the rest of the battery
+            if (joltage > biggestJoltage && bank.length - i >= desiredNumberOfBatteries - currentBatteryPosition) {
+                biggestJoltage = joltage;
                 startIndex = i + 1;
             }
         }
-        result += biggest.toString();
+
+        // Construct result as a string
+        result += biggestJoltage.toString();
     }
+
+    // Parse resulting string into a number so we can sum it later
     return parseInt(result, 10);
 }
 
