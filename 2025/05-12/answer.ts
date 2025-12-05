@@ -42,13 +42,16 @@ const solve = async () => {
     const buffer = await fs.readFile('input.txt');
     let [rangeInput, inventoryInput] = buffer.toString().split("\n\n");
 
-    const freshIds: Array<Range | null> = rangeInput.split("\n").map(parseRange);
+    // Split input into fresh ranges and inventory IDs
+    const freshRanges: Array<Range | null> = rangeInput.split("\n").map(parseRange);
     const inventory = inventoryInput.split("\n").map(i => parseInt(i, 10));
 
-    const fresh = inventory.filter(i => freshIds.filter(range => range !== null).some(range => i >= range[0] && i <= range[1]));
+    // Find inventory within fresh ranges
+    const fresh = inventory.filter(i => freshRanges.filter(range => range !== null).some(range => i >= range[0] && i <= range[1]));
     console.log(`Answer part one: ${fresh.length}`);
 
-    const totalFreshIds = collapseFreshRanges(freshIds).reduce((acc, range) => acc + (range[1] - range[0]) + 1, 0);
+    // Find all possible fresh IDs
+    const totalFreshIds = collapseFreshRanges(freshRanges).reduce((acc, range) => acc + (range[1] - range[0]) + 1, 0);
     console.log(`Answer part two: ${totalFreshIds}`);
 };
 
