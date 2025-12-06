@@ -36,17 +36,17 @@ const solve = async () => {
     reduced = reduced.map(val => val.trim());
 
     // Split the array on the cols with no numbers at all.
-    let c: number[][] = [[]];
+    let numsForOperations: number[][] = [[]];
     for (let i = reduced.length - 1; i >= 0; i--) {
         if (reduced[i] === '') {
-            c.unshift([]);
+            numsForOperations.unshift([]);
         } else {
-            c[0].push(parseInt(reduced[i], 10));
+            numsForOperations[0].push(parseInt(reduced[i], 10));
         }
     }
 
     // Perform calculation per col
-    const calculatedRtl = c.map((c, i) => c.reduce((a, b) => calc(a, b, operations[i])));
+    const calculatedRtl = numsForOperations.map((col, i) => col.reduce((acc, val) => calc(acc, val, operations[i])));
     console.log(`Answer part two: ${calculatedRtl.reduce((acc, curr) => acc + curr)}`);
 
 };
